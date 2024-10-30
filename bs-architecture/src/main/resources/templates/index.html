@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh">
+<head>
+    <title>通讯录</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            font-size: 18px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .search-box {
+            margin-bottom: 10px;
+        }
+
+        .search-input {
+            padding: 10px;
+            font-size: 16px;
+            width: 70%;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .search-btn, .delete-btn, .modify-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .search-btn.clear {
+            background-color: #f44336;
+        }
+
+        .modify-btn {
+            background-color: #008CBA;
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 100px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%;
+            border-radius: 5px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="search-box">
+    <input type="text" id="searchInput" class="search-input" placeholder="输入联系人姓名" th:value="${searchTerm}"/>
+    <button class="search-btn" onclick="searchContact()" th:style="'display: '+${searchDisplay}">查询</button>
+    <button class="search-btn clear" onclick="clearSearch()" th:style="'display: '+${clearDisplay}">清除筛选</button>
+    <button id="addContactBtn" class="search-btn">新增联系人</button>
+</div>
+
+<table>
+    <tr>
+        <th>姓名</th>
+        <th>电话号码</th>
+        <th>操作</th>
+    </tr>
+    <!--/*@thymesVar id="linkmen" type="List<Linkman>"*/-->
+    <tr th:each="linkman : ${linkmen}">
+        <td th:text="${linkman.name}"></td>
+        <td th:text="${linkman.phoneNumber}"></td>
+        <td>
+            <button class="modify-btn" th:attr="data-id=${linkman.linkmanId}" onclick="openModifyModal(this)">修改
+            </button>
+            <button class="delete-btn" th:attr="data-id=${linkman.linkmanId}" onclick="openDeleteModal(this)">删除
+            </button>
+        </td>
+    </tr>
+</table>
+
+<!-- 修改联系人的模态框 -->
+<div id="modifyModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('modifyModal')">&times;</span>
+        <h2>修改联系人</h2>
+        <input type="hidden" id="modifyContactId"/>
+        <p>姓名：<input type="text" id="modifyName"/></p>
+        <p>电话号码：<input type="text" id="modifyPhoneNumber"/></p>
+        <button onclick="modifyContact()">保存</button>
+    </div>
+</div>
+
+<!-- 删除联系人的模态框 -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('deleteModal')">&times;</span>
+        <h2>确认删除联系人？</h2>
+        <input type="hidden" id="deleteContactId"/>
+        <p>您确定要删除这个联系人吗？</p>
+        <button onclick="deleteContact()">确定</button>
+        <button onclick="closeModal('deleteModal')">取消</button>
+    </div>
+</div>
+
+<!-- 新增联系人的模态框 -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('addModal')">&times;</span>
+        <h2>新增联系人</h2>
+        <form id="addContactForm">
+            <label for="name">姓名:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="phoneNumber">电话号码:</label>
+            <input type="text" id="phoneNumber" name="phoneNumber" required>
+            <button type="submit">确认新增</button>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    function searchContact() {
+        const searchTerm = document.getElementById('searchInput').value;
+        if (searchTerm) {
+            // 这里调用后端接口进行搜索
+            window.location.href = '/search/' + searchTerm;
+        }
+    }
+
+    function clearSearch() {
+        document.getElementById('searchInput').value = '';
+        // 这里调用后端接口获取所有联系人
+        window.location.href = '/';
+    }
+
+    function openModifyModal(button) {
+        document.getElementById('modifyContactId').value = button.getAttribute('data-id');
+        document.getElementById('modifyModal').style.display = 'block';
+    }
+
+    function modifyContact() {
+        const contactId = document.getElementById('modifyContactId').value;
+        const name = document.getElementById('modifyName').value;
+        const phoneNumber = document.getElementById('modifyPhoneNumber').value;
+        // 这里调用后端接口修改联系人信息
+        const url = '/update/' + contactId; // 构建URL
+        const data = {
+            // 定义数据对象
+            name: name,
+            phoneNumber: phoneNumber,
+        };
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify(data)); // 发送JSON数据
+        closeModal('modifyModal');
+    }
+
+    function openDeleteModal(button) {
+        document.getElementById('deleteContactId').value = button.getAttribute('data-id');
+        document.getElementById('deleteModal').style.display = 'block';
+    }
+
+    function deleteContact() {
+        const contactId = document.getElementById('deleteContactId').value;
+        // 这里调用后端接口删除联系人
+        const url = '/delete/' + contactId; // 构建URL
+        const xhr = new XMLHttpRequest();
+        xhr.open('DELETE', url, true);
+        xhr.send(); // 发送DELETE请求
+        closeModal('deleteModal');
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        window.setTimeout(clearSearch, 500);
+    }
+
+    document.getElementById('addContactBtn').addEventListener('click', function () {
+        showModal('addModal');
+    });
+
+    document.getElementById('addContactForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const name = document.getElementById('name').value;
+        const phoneNumber = document.getElementById('phoneNumber').value;
+        // 这里调用后端接口新增联系人
+        const url = '/save'// 构建URL
+        const data = {
+            // 定义数据对象
+            name: name,
+            phoneNumber: phoneNumber,
+        };
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify(data)); // 发送JSON数据
+        closeModal('addModal');
+    });
+
+    function showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.style.display = "block";
+    }
+</script>
+</body>
+</html>
