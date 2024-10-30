@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: bs-architecture
+  datasource:
+    url: jdbc:mysql://localhost:3306/address_list_experiment?characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # ??Thymeleaf???
+  thymeleaf:
+    cache: false
